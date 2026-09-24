@@ -105,7 +105,7 @@ Problème de permissions d'accès aux cartes réseau virtuelles sous Linux.
 
 ### 3.1. Configuration du FortiGate SIÈGE
 
-#### Phase 1 & Phase 2 VPN
+#### 3.1.1. Phase 1 & Phase 2 VPN
 ```haproxy
 config vpn ipsec phase1-interface
     edit "VPN-AGENCE"
@@ -130,7 +130,7 @@ config vpn ipsec phase2-interface
 end
 ```
 
-#### Route Statique
+#### 3.1.2. Route Statique
 ```haproxy
 config router static
     edit 0
@@ -140,7 +140,7 @@ config router static
 end
 ```
 
-#### Objets d'Adresses & Politiques de Pare-feu (Exemption de NAT)
+#### 3.1.3. Objets d'Adresses & Politiques de Pare-feu (Exemption de NAT)
 ```haproxy
 # 1. Objet LAN Siège
 config firewall address
@@ -183,9 +183,41 @@ config firewall policy
 end
 ```
 
+### 3.1.4. Configuration de la Route Statique par défaut vers Internet
+```bash
+config router static
+    edit 1
+        set dst 0.0.0.0 0.0.0.0
+        set gateway 172.16.92.1
+        set device "port1"
+    end
+```
+### 3.1.5. Configuration de la Règle de Pare-feu / Firewall Policy
+#### *autorise tout le trafic du port2 (LAN) vers le port1 (WAN) avec du NAT classique*
+```bash
+config firewall policy
+    edit 3
+        set name "LAN_Siege_vers_Internet"
+        set srcintf "port2"
+        set dstintf "port1"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set inspection-mode flow
+        set nat enable
+    end
+```
+### **Étape de vérification finale**
+```bash
+show router static
+```
+
 ---
 
 ### 3.2. Configuration du FortiGate AGENCE (Miroir)
+#### 3.2.1. Phase 1 & Phase 2 VPN
 
 ```haproxy
 config vpn ipsec phase1-interface
@@ -209,7 +241,9 @@ config vpn ipsec phase2-interface
         set dst-subnet 192.168.10.0/24
     next
 end
-
+```
+#### 3.2.2. Route Statique
+```haproxy
 config router static
     edit 0
         set dst 192.168.10.0/24
@@ -217,8 +251,9 @@ config router static
     next
 end
 ```
-### 3.3. Configuration du FortiGate AGENCE (Miroir)
-#### *Agence : LAN → VPN*
+#### 3.2.3. Objets d'Adresses & Politiques de Pare-feu (Exemption de NAT)
+
+*Agence : LAN → VPN*
 ```haproxy
 config firewall address
     edit "LAN-SIEGE"
@@ -229,7 +264,7 @@ config firewall address
     next
 end
 ```
-#### *Puis :*
+*Puis :*
 ```haproxy
 config firewall policy
     edit 0
@@ -245,7 +280,7 @@ config firewall policy
     next
 end
 ```
-#### *Et la policy retour :*
+*Et la policy retour :*
 ```haproxy
 config firewall policy
     edit 0
@@ -261,11 +296,41 @@ config firewall policy
     next
 end
 ```
-#### *Après verifier:*
+*Après verifier:*
 ```haproxy
 show firewall policy
 ```
 
+### 3.2.4. Configuration de la Route Statique par défaut vers Internet
+```bash
+config router static
+    edit 1
+        set dst 0.0.0.0 0.0.0.0
+        set gateway 172.16.92.1
+        set device "port1"
+    end
+```
+### 3.2.5. Configuration de la Règle de Pare-feu / Firewall Policy
+#### *autorise tout le trafic du port2 (LAN) vers le port1 (WAN) avec du NAT classique*
+```bash
+config firewall policy
+    edit 3
+        set name "LAN_Agence_vers_Internet"
+        set srcintf "port2"
+        set dstintf "port1"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set inspection-mode flow
+        set nat enable
+    end
+```
+### **Étape de vérification finale**
+```bash
+show router static
+```
 
 ---
 
