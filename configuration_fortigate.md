@@ -217,6 +217,55 @@ config router static
     next
 end
 ```
+### 3.3. Configuration du FortiGate AGENCE (Miroir)
+#### *Agence : LAN → VPN*
+```haproxy
+config firewall address
+    edit "LAN-SIEGE"
+        set subnet 192.168.10.0 255.255.255.0
+    next
+    edit "LAN-AGENCE"
+        set subnet 192.168.20.0 255.255.255.0
+    next
+end
+```
+#### *Puis :*
+```haproxy
+config firewall policy
+    edit 0
+        set name "AGENCE-vers-SIEGE"
+        set srcintf "port2"
+        set dstintf "VPN-SIEGE"
+        set srcaddr "LAN-AGENCE"
+        set dstaddr "LAN-SIEGE"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set nat disable
+    next
+end
+```
+#### *Et la policy retour :*
+```haproxy
+config firewall policy
+    edit 0
+        set name "SIEGE-vers-AGENCE"
+        set srcintf "VPN-SIEGE"
+        set dstintf "port2"
+        set srcaddr "LAN-SIEGE"
+        set dstaddr "LAN-AGENCE"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set nat disable
+    next
+end
+```
+#### *Après verifier:*
+```haproxy
+show firewall policy
+```
+
 
 ---
 
